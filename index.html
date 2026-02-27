@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newton-Raphson Interactivo | Método Numérico</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 25%, #312e81 50%, #1e1b4b 75%, #0f172a 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #ffffff;
+        }
+        
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+        
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: float 15s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+        }
+        
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none; margin: 0;
+        }
+        
+        .table-row {
+            animation: slideInRow 0.3s ease forwards;
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        
+        @keyframes slideInRow {
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px; height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        
+        .result-card {
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .katex { font-size: 1.1em; }
+    </style>
+</head>
+<body x-data="newtonApp()" x-init="initApp()">
+    
+    <div id="particles" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
+    
+    <!-- Navbar -->
+    <nav class="glass-nav fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-500 flex items-center justify-center shadow-lg">
+                        <i class="bi bi-graph-up-arrow text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg tracking-tight">Newton-Raphson</h1>
+                        <p class="text-xs text-white/60">Método Numérico Interactivo</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button @click="showTheory = !showTheory" 
+                            class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-sm">
+                        <i class="bi bi-book mr-2"></i>Teoría
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            
+            <!-- Hero -->
+            <section class="text-center mb-12">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm mb-6">
+                    <i class="bi bi-calculator"></i>
+                    <span>Solución de Ecuaciones No Lineales</span>
+                </div>
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-cyan-200 to-purple-200 bg-clip-text text-transparent">
+                    Método de Newton-Raphson
+                </h1>
+                <p class="text-lg text-white/70 max-w-2xl mx-auto mb-8">
+                    Resuelve <span class="font-mono text-cyan-300">f(x) = x⁵ - 3x⁴ + 10x - 8 = 0</span> 
+                    con visualización paso a paso.
+                </p>
+                <div class="glass-card inline-block px-8 py-4 rounded-2xl">
+                    <div class="text-xl font-mono" id="equation-display"></div>
+                </div>
+            </section>
+
+            <!-- Panel de Control -->
+            <section class="glass-card rounded-2xl p-6 mb-8">
+                <div class="flex flex-col lg:flex-row gap-6 items-end">
+                    <div class="flex-1 w-full">
+                        <label class="block text-sm font-medium text-white/70 mb-2">
+                            <i class="bi bi-play-circle mr-2"></i>Valor Inicial (x₀)
+                        </label>
+                        <input type="number" x-model="x0" step="0.1" placeholder="Ej: 0.5, 1, 2..."
+                               class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none font-mono text-lg"
+                               @keyup.enter="calcular()">
+                    </div>
+                    <div class="flex-1 w-full">
+                        <label class="block text-sm font-medium text-white/70 mb-2">
+                            <i class="bi bi-bullseye mr-2"></i>Tolerancia
+                        </label>
+                        <input type="number" x-model="tolerancia" step="1e-15" placeholder="1e-15"
+                               class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none font-mono text-lg">
+                    </div>
+                    <div class="flex gap-3 w-full lg:w-auto">
+                        <button @click="calcular()" :disabled="loading"
+                                class="flex-1 lg:flex-none px-8 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white font-semibold shadow-lg transition-all disabled:opacity-50">
+                            <i class="bi bi-calculator mr-2" x-show="!loading"></i>
+                            <i class="bi bi-arrow-repeat animate-spin mr-2" x-show="loading"></i>
+                            <span x-text="loading ? 'Calculando...' : 'Calcular'"></span>
+                        </button>
+                        <button @click="reset()" class="px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10">
+                            <i class="bi bi-arrow-counterclockwise text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <span class="text-sm text-white/50">Sugeridos:</span>
+                    <template x-for="val in [0.5, 0.8, 1, 2, 2.9, 3]">
+                        <button @click="x0 = val; calcular()" 
+                                class="px-3 py-1 rounded-lg bg-white/5 hover:bg-cyan-500/20 border border-white/10 text-sm transition-all"
+                                x-text="val"></button>
+                    </template>
+                </div>
+            </section>
+
+            <!-- Panel Teórico -->
+            <section x-show="showTheory" x-transition class="glass-card rounded-2xl p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold"><i class="bi bi-book-open text-cyan-400 mr-2"></i>Fundamento Teórico</h2>
+                    <button @click="showTheory = false" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                        <h3 class="text-sm font-semibold text-white/70 mb-2">Fórmula</h3>
+                        <div id="formula-newton" class="text-center py-2"></div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                        <h3 class="text-sm font-semibold text-white/70 mb-2">Función</h3>
+                        <div id="formula-funcion" class="text-center py-2"></div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                        <h3 class="text-sm font-semibold text-white/70 mb-2">Derivada</h3>
+                        <div id="formula-derivada" class="text-center py-2"></div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                        <h3 class="text-sm font-semibold text-white/70 mb-2">Error %</h3>
+                        <div id="formula-error" class="text-center py-2"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Resultados -->
+            <template x-if="resultado">
+                <section class="space-y-8">
+                    <!-- Resumen -->
+                    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="result-card glass-card rounded-xl p-5 border-l-4 border-cyan-500">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                                    <i class="bi bi-check-circle text-cyan-400"></i>
+                                </div>
+                                <span class="text-sm text-white/60">Raíz</span>
+                            </div>
+                            <div class="text-2xl font-mono font-bold text-cyan-300" x-text="formatNumber(resultado.raiz, 10)"></div>
+                        </div>
+                        <div class="result-card glass-card rounded-xl p-5 border-l-4 border-purple-500">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                                    <i class="bi bi-arrow-repeat text-purple-400"></i>
+                                </div>
+                                <span class="text-sm text-white/60">Iteraciones</span>
+                            </div>
+                            <div class="text-2xl font-mono font-bold text-purple-300" x-text="resultado.total_iteraciones"></div>
+                        </div>
+                        <div class="result-card glass-card rounded-xl p-5 border-l-4 border-emerald-500">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                                    <i class="bi bi-bullseye text-emerald-400"></i>
+                                </div>
+                                <span class="text-sm text-white/60">Error Final</span>
+                            </div>
+                            <div class="text-2xl font-mono font-bold text-emerald-300" 
+                                 x-text="resultado.iteraciones.length > 0 ? formatoCientifico(resultado.iteraciones[resultado.iteraciones.length-1].error_absoluto) : '-'"></div>
+                        </div>
+                        <div class="result-card glass-card rounded-xl p-5 border-l-4 border-amber-500">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                                    <i class="bi bi-calculator text-amber-400"></i>
+                                </div>
+                                <span class="text-sm text-white/60">f(Raíz)</span>
+                            </div>
+                            <div class="text-2xl font-mono font-bold text-amber-300" 
+                                 x-text="resultado.iteraciones.length > 0 ? formatoCientifico(resultado.iteraciones[resultado.iteraciones.length-1].fx) : '-'"></div>
+                        </div>
+                    </div>
+
+                    <!-- Gráficas -->
+                    <div class="grid lg:grid-cols-2 gap-6">
+                        <div class="glass-card rounded-2xl p-6">
+                            <h3 class="text-lg font-semibold mb-4"><i class="bi bi-graph-up text-cyan-400 mr-2"></i>Función</h3>
+                            <div class="relative h-80"><canvas id="chartFuncion"></canvas></div>
+                        </div>
+                        <div class="glass-card rounded-2xl p-6">
+                            <h3 class="text-lg font-semibold mb-4"><i class="bi bi-arrow-down-right text-purple-400 mr-2"></i>Convergencia</h3>
+                            <div class="relative h-80"><canvas id="chartConvergencia"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla -->
+                    <div class="glass-card rounded-2xl p-6 overflow-hidden">
+                        <h3 class="text-lg font-semibold mb-4"><i class="bi bi-table text-cyan-400 mr-2"></i>Iteraciones</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-white/10">
+                                        <th class="text-left py-3 px-4 text-sm font-semibold text-white/70">Iter</th>
+                                        <th class="text-left py-3 px-4 text-sm font-semibold text-white/70">xᵢ</th>
+                                        <th class="text-left py-3 px-4 text-sm font-semibold text-white/70">f(xᵢ)</th>
+                                        <th class="text-left py-3 px-4 text-sm font-semibold text-white/70">f'(xᵢ)</th>
+                                        <th class="text-left py-3 px-4 text-sm font-semibold text-white/70">xᵢ₊₁</th>
+                                        <th class="text-left py-3 px-4 text-sm font-semibold text-white/70">Error</th>
+                                        <th class="text-left py-3 px-4 text-sm font-semibold text-white/70">Error %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(it, index) in resultado.iteraciones" :key="index">
+                                        <tr class="table-row border-b border-white/5 hover:bg-white/5"
+                                            :class="index === resultado.iteraciones.length - 1 ? 'bg-emerald-500/10' : ''"
+                                            :style="`animation-delay: ${index * 0.05}s`">
+                                            <td class="py-3 px-4 font-mono" x-text="it.iteracion"></td>
+                                            <td class="py-3 px-4 font-mono text-cyan-300" x-text="formatNumber(it.xi, 8)"></td>
+                                            <td class="py-3 px-4 font-mono" x-text="formatoCientifico(it.fx)"></td>
+                                            <td class="py-3 px-4 font-mono" x-text="formatNumber(it.dfx, 6)"></td>
+                                            <td class="py-3 px-4 font-mono text-purple-300 font-semibold" x-text="formatNumber(it.xi_siguiente, 8)"></td>
+                                            <td class="py-3 px-4 font-mono text-emerald-300" x-text="formatoCientifico(it.error_absoluto)"></td>
+                                            <td class="py-3 px-4 font-mono" x-text="formatNumber(it.error_porcentual, 6) + '%'"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </template>
+
+            <!-- Error -->
+            <section x-show="error" x-transition class="mt-8">
+                <div class="glass-card rounded-2xl p-6 border-l-4 border-red-500 bg-red-500/10">
+                    <div class="flex items-center gap-3">
+                        <i class="bi bi-exclamation-triangle text-red-400 text-2xl"></i>
+                        <div>
+                            <h3 class="font-semibold text-red-300">Error</h3>
+                            <p class="text-white/70" x-text="error"></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="border-t border-white/10 py-8 px-4 mt-12">
+        <div class="max-w-7xl mx-auto text-center">
+            <p class="text-white/50 text-sm">Newton-Raphson Interactivo · Métodos Numéricos · 2024</p>
+        </div>
+    </footer>
+
+    <script>
+        // Configuración de Chart.js
+        Chart.defaults.color = 'rgba(255, 255, 255, 0.8)';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+        
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('newtonApp', () => ({
+                x0: '',
+                tolerancia: 1e-15,
+                loading: false,
+                resultado: null,
+                error: null,
+                showTheory: false,
+                chartFuncion: null,
+                chartConvergencia: null,
+                
+                initApp() {
+                    this.initParticles();
+                    this.renderMathFormulas();
+                    gsap.from('.glass-nav', { y: -100, opacity: 0, duration: 0.8 });
+                },
+                
+                initParticles() {
+                    const container = document.getElementById('particles');
+                    for (let i = 0; i < 30; i++) {
+                        const p = document.createElement('div');
+                        p.className = 'particle';
+                        p.style.left = Math.random() * 100 + '%';
+                        p.style.top = Math.random() * 100 + '%';
+                        p.style.animationDelay = Math.random() * 15 + 's';
+                        p.style.animationDuration = (10 + Math.random() * 10) + 's';
+                        container.appendChild(p);
+                    }
+                },
+                
+                renderMathFormulas() {
+                    const formulas = [
+                        ['formula-newton', 'x_{n+1} = x_n - \\frac{f(x_n)}{f\\\'(x_n)}'],
+                        ['formula-funcion', 'f(x) = x^5 - 3x^4 + 10x - 8'],
+                        ['formula-derivada', "f'(x) = 5x^4 - 12x^3 + 10"],
+                        ['formula-error', 'E_p = \\frac{|x_{n+1} - x_n|}{|x_{n+1}|} \\times 100\\%'],
+                        ['equation-display', 'f(x) = x^5 - 3x^4 + 10x - 8 = 0']
+                    ];
+                    
+                    formulas.forEach(([id, tex]) => {
+                        const el = document.getElementById(id);
+                        if (el) katex.render(tex, el, { throwOnError: false });
+                    });
+                },
+                
+                // Método de Newton-Raphson en el cliente
+                f(x) {
+                    return Math.pow(x, 5) - 3 * Math.pow(x, 4) + 10 * x - 8;
+                },
+                
+                df(x) {
+                    return 5 * Math.pow(x, 4) - 12 * Math.pow(x, 3) + 10;
+                },
+                
+                calcular() {
+                    if (!this.x0 && this.x0 !== 0) {
+                        this.error = 'Ingresa un valor inicial x₀';
+                        return;
+                    }
+                    
+                    this.loading = true;
+                    this.error = null;
+                    this.resultado = null;
+                    
+                    if (this.chartFuncion) { this.chartFuncion.destroy(); this.chartFuncion = null; }
+                    if (this.chartConvergencia) { this.chartConvergencia.destroy(); this.chartConvergencia = null; }
+                    
+                    // Simular delay para efecto visual
+                    setTimeout(() => {
+                        const x0 = parseFloat(this.x0);
+                        const tol = parseFloat(this.tolerancia) || 1e-15;
+                        
+                        const iteraciones = [];
+                        let x_actual = x0;
+                        let convergio = false;
+                        let raiz = null;
+                        
+                        for (let i = 0; i < 100; i++) {
+                            const fx = this.f(x_actual);
+                            const dfx = this.df(x_actual);
+                            
+                            if (Math.abs(dfx) < 1e-15) break;
+                            
+                            const x_siguiente = x_actual - fx / dfx;
+                            const error_absoluto = Math.abs(x_siguiente - x_actual);
+                            const error_porcentual = Math.abs(x_siguiente) > 1e-15 ? (error_absoluto / Math.abs(x_siguiente)) * 100 : 0;
+                            
+                            iteraciones.push({
+                                iteracion: i + 1,
+                                xi: x_actual,
+                                fx: fx,
+                                dfx: dfx,
+                                xi_siguiente: x_siguiente,
+                                error_absoluto: error_absoluto,
+                                error_porcentual: error_porcentual
+                            });
+                            
+                            if (error_absoluto < tol) {
+                                convergio = true;
+                                raiz = x_siguiente;
+                                break;
+                            }
+                            
+                            x_actual = x_siguiente;
+                        }
+                        
+                        if (raiz === null && iteraciones.length > 0) {
+                            raiz = iteraciones[iteraciones.length - 1].xi_siguiente;
+                        }
+                        
+                        this.resultado = {
+                            convergio: convergio,
+                            raiz: raiz,
+                            total_iteraciones: iteraciones.length,
+                            iteraciones: iteraciones
+                        };
+                        
+                        this.$nextTick(() => {
+                            this.initCharts();
+                            gsap.from('.result-card', { y: 30, opacity: 0, duration: 0.6, stagger: 0.1 });
+                        });
+                        
+                        this.loading = false;
+                    }, 500);
+                },
+                
+                initCharts() {
+                    // Datos para la función
+                    const x_vals = [];
+                    const y_vals = [];
+                    for (let x = -3; x <= 3; x += 0.01) {
+                        x_vals.push(x.toFixed(2));
+                        y_vals.push(this.f(x));
+                    }
+                    
+                    // Gráfica de función
+                    const ctx1 = document.getElementById('chartFuncion');
+                    if (ctx1) {
+                        this.chartFuncion = new Chart(ctx1, {
+                            type: 'line',
+                            data: {
+                                labels: x_vals,
+                                datasets: [{
+                                    label: 'f(x)',
+                                    data: y_vals,
+                                    borderColor: 'rgba(14, 165, 233, 1)',
+                                    backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                                    borderWidth: 2,
+                                    fill: true,
+                                    tension: 0.4,
+                                    pointRadius: 0
+                                }, {
+                                    label: 'y = 0',
+                                    data: x_vals.map(() => 0),
+                                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                                    borderWidth: 1,
+                                    borderDash: [5, 5],
+                                    pointRadius: 0
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { labels: { color: 'rgba(255, 255, 255, 0.8)' } }
+                                },
+                                scales: {
+                                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: 'rgba(255, 255, 255, 0.6)', maxTicksLimit: 10 } },
+                                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: 'rgba(255, 255, 255, 0.6)' } }
+                                }
+                            }
+                        });
+                    }
+                    
+                    // Gráfica de convergencia
+                    const ctx2 = document.getElementById('chartConvergencia');
+                    if (ctx2 && this.resultado.iteraciones.length > 0) {
+                        this.chartConvergencia = new Chart(ctx2, {
+                            type: 'line',
+                            data: {
+                                labels: this.resultado.iteraciones.map(it => 'Iter ' + it.iteracion),
+                                datasets: [{
+                                    label: 'xᵢ',
+                                    data: this.resultado.iteraciones.map(it => it.xi),
+                                    borderColor: 'rgba(217, 70, 239, 1)',
+                                    backgroundColor: 'rgba(217, 70, 239, 0.1)',
+                                    borderWidth: 2,
+                                    fill: true,
+                                    tension: 0.3,
+                                    pointRadius: 5
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { labels: { color: 'rgba(255, 255, 255, 0.8)' } }
+                                },
+                                scales: {
+                                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: 'rgba(255, 255, 255, 0.6)' } },
+                                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: 'rgba(255, 255, 255, 0.6)' } }
+                                }
+                            }
+                        });
+                    }
+                },
+                
+                reset() {
+                    this.x0 = '';
+                    this.tolerancia = 1e-15;
+                    this.resultado = null;
+                    this.error = null;
+                    this.showTheory = false;
+                    if (this.chartFuncion) { this.chartFuncion.destroy(); this.chartFuncion = null; }
+                    if (this.chartConvergencia) { this.chartConvergencia.destroy(); this.chartConvergencia = null; }
+                },
+                
+                formatNumber(num, decimals = 6) {
+                    if (num === undefined || num === null) return '-';
+                    const n = parseFloat(num);
+                    if (Math.abs(n) < 1e-10) return n.toExponential(4);
+                    if (Math.abs(n) > 1e6) return n.toExponential(4);
+                    return n.toFixed(decimals).replace(/\.?0+$/, '');
+                },
+                
+                formatoCientifico(num) {
+                    if (num === undefined || num === null) return '-';
+                    const n = parseFloat(num);
+                    if (n === 0) return '0';
+                    if (Math.abs(n) < 0.001 || Math.abs(n) > 10000) return n.toExponential(4);
+                    return n.toFixed(6).replace(/\.?0+$/, '');
+                }
+            }));
+        });
+    </script>
+</body>
+</html>

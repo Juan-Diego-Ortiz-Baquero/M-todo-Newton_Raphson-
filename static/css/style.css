@@ -1,0 +1,565 @@
+/* ==========================================================================
+   Newton-Raphson App — Design System v2
+   =========================================================================
+   LAYER ORDER
+   1. Design tokens   2. Base & reset   3. Glassmorphism surfaces
+   4. Navigation      5. Particles      6. Hero
+   7. Control panel   8. Buttons        9. Results dashboard
+   10. Metric cards   11. Chart containers   12. Section headers
+   13. Table          14. Theory panel   15. Alerts
+   16. Keyframes      17. Utilities      18. Accessibility
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. DESIGN TOKENS
+   ========================================================================== */
+:root {
+    /* Palette */
+    --c-primary-400: #38bdf8;
+    --c-primary-500: #0ea5e9;
+    --c-primary-600: #0284c7;
+    --c-accent-400:  #a78bfa;
+    --c-accent-500:  #8b5cf6;
+    --c-accent-600:  #7c3aed;
+    --c-emerald-400: #34d399;
+    --c-emerald-500: #10b981;
+    --c-amber-400:   #fbbf24;
+    --c-amber-500:   #f59e0b;
+    --c-red-400:     #f87171;
+    --c-red-500:     #ef4444;
+
+    /* Glassmorphism */
+    --glass-bg:           rgba(255, 255, 255, 0.042);
+    --glass-bg-hover:     rgba(255, 255, 255, 0.065);
+    --glass-bg-raised:    rgba(255, 255, 255, 0.058);
+    --glass-border:       rgba(255, 255, 255, 0.085);
+    --glass-border-hover: rgba(255, 255, 255, 0.155);
+    --glass-border-focus: rgba(14, 165, 233, 0.55);
+    --glass-shadow:       0 4px 24px rgba(0,0,0,0.42), 0 1px 2px rgba(0,0,0,0.60);
+    --glass-shadow-lg:    0 8px 40px rgba(0,0,0,0.52), 0 2px 4px rgba(0,0,0,0.70);
+    --glass-shadow-hover: 0 12px 48px rgba(0,0,0,0.58), 0 2px 6px rgba(0,0,0,0.76);
+    --edge-light:         inset 0 1px 0 rgba(255,255,255,0.065);
+
+    /* Semantic glows */
+    --glow-primary: 0 0 28px rgba(14,165,233,0.28),  0 0 60px rgba(14,165,233,0.10);
+    --glow-accent:  0 0 28px rgba(139,92,246,0.28),  0 0 60px rgba(139,92,246,0.10);
+    --glow-emerald: 0 0 28px rgba(16,185,129,0.28),  0 0 60px rgba(16,185,129,0.10);
+    --glow-amber:   0 0 28px rgba(245,158,11,0.28),  0 0 60px rgba(245,158,11,0.10);
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, var(--c-primary-500) 0%, var(--c-accent-500) 100%);
+    --gradient-text:    linear-gradient(135deg, #e2f4ff 0%, #7dd3fc 45%, #a78bfa 100%);
+
+    /* Typography */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+    /* Transitions */
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --t-fast: 0.14s;
+    --t-base: 0.22s;
+    --t-slow: 0.38s;
+
+    /* Radii */
+    --radius-sm:  0.5rem;
+    --radius-md:  0.75rem;
+    --radius-lg:  1rem;
+    --radius-xl:  1.25rem;
+    --radius-2xl: 1.5rem;
+}
+
+
+
+/* ==========================================================================
+   2. BASE & RESET OVERRIDES
+   ========================================================================== */
+html { scroll-behavior: smooth; }
+
+body {
+    font-family:              var(--font-sans);
+    background:
+        radial-gradient(ellipse 85% 48% at 50% -8%, rgba(14,165,233,0.11) 0%, transparent 58%),
+        radial-gradient(ellipse 55% 38% at 82% 82%, rgba(139,92,246,0.08) 0%, transparent 52%),
+        linear-gradient(170deg, #060b14 0%, #080f1e 40%, #090e1c 100%);
+    background-attachment: fixed;
+    min-height:    100vh;
+    color:         #f1f5f9;
+    overflow-x:    hidden;
+    -webkit-font-smoothing:  antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Remove number spinners */
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Scrollbar */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: rgba(255,255,255,0.03); }
+::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.14); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.24); }
+
+/* Selection */
+::selection { background: rgba(14,165,233,0.28); color: #fff; }
+
+
+/* ==========================================================================
+   3. GLASSMORPHISM SURFACES
+   ========================================================================== */
+.glass-card {
+    background:               var(--glass-bg);
+    backdrop-filter:          blur(22px) saturate(160%);
+    -webkit-backdrop-filter:  blur(22px) saturate(160%);
+    border:                   1px solid var(--glass-border);
+    box-shadow:               var(--glass-shadow), var(--edge-light);
+    transition:               border-color var(--t-base) var(--ease-smooth),
+                              box-shadow   var(--t-base) var(--ease-smooth),
+                              background   var(--t-base) var(--ease-smooth);
+}
+.glass-card:hover {
+    border-color: var(--glass-border-hover);
+    box-shadow:   var(--glass-shadow-hover), var(--edge-light);
+    background:   var(--glass-bg-hover);
+}
+
+/* Elevated variant — primary content areas */
+.glass-card-raised {
+    background:              var(--glass-bg-raised);
+    backdrop-filter:         blur(26px) saturate(180%);
+    -webkit-backdrop-filter: blur(26px) saturate(180%);
+    border:                  1px solid rgba(255,255,255,0.11);
+    box-shadow:              var(--glass-shadow-lg), var(--edge-light);
+}
+
+
+/* ==========================================================================
+   4. NAVIGATION
+   ========================================================================== */
+.glass-nav {
+    background:              rgba(6, 11, 20, 0.86);
+    backdrop-filter:         blur(26px) saturate(180%);
+    -webkit-backdrop-filter: blur(26px) saturate(180%);
+    border-bottom:           1px solid rgba(255,255,255,0.07);
+    box-shadow:              0 1px 0 rgba(255,255,255,0.04);
+}
+
+.nav-btn {
+    transition: background-color var(--t-base) var(--ease-smooth),
+                border-color     var(--t-base) var(--ease-smooth),
+                color            var(--t-base) var(--ease-smooth);
+}
+
+.brand-icon {
+    box-shadow: 0 4px 16px rgba(14,165,233,0.22);
+    transition: box-shadow var(--t-base) var(--ease-smooth),
+                transform  var(--t-base) var(--ease-spring);
+}
+.brand-icon:hover {
+    box-shadow: var(--glow-primary);
+    transform:  scale(1.06);
+}
+
+
+/* ==========================================================================
+   5. BACKGROUND PARTICLES
+   ========================================================================== */
+.particle {
+    position:      absolute;
+    border-radius: 50%;
+    width:  2px;
+    height: 2px;
+    background:  rgba(255,255,255,0.20);
+    will-change: transform, opacity;
+    animation:   particle-float 18s infinite ease-in-out;
+}
+.particle:nth-child(5n) {
+    width: 3px; height: 3px;
+    background: rgba(14,165,233,0.28);
+    filter: blur(0.5px);
+}
+.particle:nth-child(7n) {
+    width: 3px; height: 3px;
+    background: rgba(139,92,246,0.26);
+}
+
+@keyframes particle-float {
+    0%   { transform: translateY(0) translateX(0) scale(1);       opacity: 0; }
+    8%   { opacity: 1; }
+    92%  { opacity: 1; }
+    100% { transform: translateY(-100vh) translateX(38px) scale(0.5); opacity: 0; }
+}
+
+
+/* ==========================================================================
+   6. HERO SECTION
+   ========================================================================== */
+.hero-section {
+    position: relative;
+}
+.hero-section::before {
+    content:  '';
+    position: absolute;
+    inset:    -60px;
+    background: radial-gradient(ellipse 55% 38% at 50% 50%,
+                    rgba(14,165,233,0.07) 0%, transparent 68%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.hero-badge {
+    display:      inline-flex;
+    align-items:  center;
+    gap:          0.4rem;
+    padding:      0.32rem 0.88rem;
+    border-radius: 9999px;
+    font-size:    0.7rem;
+    font-weight:  700;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+    color:        rgba(167,139,250,0.95);
+    background:   rgba(139,92,246,0.10);
+    border:       1px solid rgba(139,92,246,0.28);
+    box-shadow:   0 0 18px rgba(139,92,246,0.12);
+}
+
+.hero-title {
+    background:              var(--gradient-text);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip:         text;
+    line-height:             1.1;
+}
+
+.hero-equation-card {
+    display:     inline-block;
+    padding:     0.85rem 2rem;
+    border-radius: var(--radius-xl);
+    background:  rgba(14,165,233,0.065);
+    border:      1px solid rgba(14,165,233,0.22);
+    box-shadow:  0 0 36px rgba(14,165,233,0.09);
+}
+
+
+/* ==========================================================================
+   7. CONTROL PANEL & FORM INPUTS
+   ========================================================================== */
+.control-panel {
+    position: relative;
+    overflow: hidden;
+}
+/* Animated gradient top-stripe */
+.control-panel::before {
+    content:  '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(14,165,233,0.55) 30%,
+        rgba(139,92,246,0.55) 70%,
+        transparent 100%);
+}
+
+.form-input {
+    caret-color: var(--c-primary-400);
+    color: #f1f5f9;
+    transition: border-color var(--t-base) var(--ease-smooth),
+                box-shadow   var(--t-base) var(--ease-smooth),
+                background   var(--t-base) var(--ease-smooth);
+}
+.form-input::placeholder { color: rgba(255,255,255,0.20); }
+.form-input:focus {
+    background:   rgba(14,165,233,0.055) !important;
+    border-color: var(--glass-border-focus) !important;
+    box-shadow:   0 0 0 3px rgba(14,165,233,0.11);
+}
+
+
+/* ==========================================================================
+   8. BUTTONS
+   ========================================================================== */
+.btn-primary, .btn-secondary, .preset-btn {
+    cursor: pointer;
+    user-select: none;
+}
+
+.btn-primary:active  { transform: scale(0.97); }
+.btn-secondary:active,
+.preset-btn:active   { transform: scale(0.96); }
+
+.btn-primary {
+    position:   relative;
+    overflow:   hidden;
+    box-shadow: 0 4px 20px rgba(14,165,233,0.22), inset 0 1px 0 rgba(255,255,255,0.07);
+    transition: transform  var(--t-base) var(--ease-spring),
+                box-shadow var(--t-base) var(--ease-smooth);
+}
+.btn-primary:not(:disabled):hover {
+    box-shadow: 0 6px 28px rgba(14,165,233,0.36), inset 0 1px 0 rgba(255,255,255,0.09);
+    transform:  translateY(-1px);
+}
+
+/* Shimmer sweep */
+.btn-primary::after {
+    content:    '';
+    position:   absolute;
+    inset:      0;
+    left:       -110%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent);
+    transition: left 0.50s var(--ease-smooth);
+}
+.btn-primary:not(:disabled):hover::after { left: 110%; }
+
+/* Spin icon */
+.spin-icon { display: inline-block; animation: icon-spin 0.7s linear infinite; }
+@keyframes icon-spin { to { transform: rotate(360deg); } }
+
+
+/* ==========================================================================
+   9. RESULTS DASHBOARD
+   ========================================================================== */
+.results-header {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+/* Pulsing status dot */
+.status-dot {
+    width:  8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--c-emerald-400);
+    box-shadow: 0 0 8px rgba(52,211,153,0.7);
+    animation: status-pulse 2.6s cubic-bezier(0.4,0,0.6,1) infinite;
+    flex-shrink: 0;
+}
+@keyframes status-pulse {
+    0%,100% { opacity:1;   transform:scale(1);    box-shadow:0 0 8px  rgba(52,211,153,0.7); }
+    50%     { opacity:0.6; transform:scale(1.18); box-shadow:0 0 18px rgba(52,211,153,0.45); }
+}
+
+
+/* ==========================================================================
+   10. METRIC CARDS
+   ========================================================================== */
+.metric-card {
+    position:   relative;
+    overflow:   hidden;
+    transition: transform  var(--t-base) var(--ease-spring),
+                box-shadow var(--t-base) var(--ease-smooth),
+                border-color var(--t-base) var(--ease-smooth);
+}
+.metric-card:hover { transform: translateY(-3px); }
+
+/* Decorative radial glow in bottom-right corner */
+.metric-card::after {
+    content:  '';
+    position: absolute;
+    bottom:   -22px;
+    right:    -22px;
+    width:    85px;
+    height:   85px;
+    border-radius: 50%;
+    background: var(--card-glow, rgba(14,165,233,0.14));
+    filter:   blur(22px);
+    pointer-events: none;
+    opacity: 0.7;
+    transition: opacity var(--t-base) var(--ease-smooth);
+}
+.metric-card:hover::after { opacity: 1.0; }
+
+/* Semantic variants */
+.metric-card--primary { --card-glow: rgba(14,165,233,0.16);  }
+.metric-card--accent  { --card-glow: rgba(139,92,246,0.16);  }
+.metric-card--emerald { --card-glow: rgba(16,185,129,0.16);  }
+.metric-card--amber   { --card-glow: rgba(245,158,11,0.16);  }
+
+.metric-icon {
+    width:           2.2rem;
+    height:          2.2rem;
+    border-radius:   var(--radius-md);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    flex-shrink:     0;
+    transition:      transform var(--t-base) var(--ease-spring);
+}
+.metric-card:hover .metric-icon { transform: scale(1.10); }
+
+.metric-value {
+    font-family:     var(--font-mono);
+    font-size:       1.15rem;
+    font-weight:     700;
+    line-height:     1.2;
+    letter-spacing: -0.01em;
+}
+.metric-label {
+    font-size:      0.69rem;
+    font-weight:    600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color:          rgba(255,255,255,0.40);
+    margin-top:     0.15rem;
+}
+
+
+/* ==========================================================================
+   11. CHART CONTAINERS
+   ========================================================================== */
+.chart-container {
+    position: relative;
+}
+.chart-container canvas {
+    position: absolute;
+    inset:    0;
+    width:    100% !important;
+    height:   100% !important;
+}
+
+/* Global chart card — distinguished by stronger top accent line */
+.chart-global-card {
+    border-top: 2px solid rgba(14,165,233,0.30);
+    box-shadow: var(--glass-shadow-lg), var(--edge-light),
+                0 -2px 28px rgba(14,165,233,0.07);
+}
+
+/* Backward-compat alias kept for GSAP selectors */
+.chart-global-section { border-top: 2px solid rgba(14,165,233,0.28); }
+
+.chart-card-meta {
+    font-size:  0.7rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.28);
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+}
+
+/* Legend badges */
+.chart-legend-badge {
+    display:     inline-flex;
+    align-items: center;
+    gap:         0.4rem;
+    padding:     0.28rem 0.65rem;
+    border-radius: var(--radius-md);
+    font-size:   0.7rem;
+    font-weight: 500;
+    color:       var(--badge-color, rgba(255,255,255,0.65));
+    background:  color-mix(in srgb, var(--badge-color, rgba(255,255,255,0.1)) 12%, transparent);
+    border:      1px solid color-mix(in srgb, var(--badge-color, rgba(255,255,255,0.1)) 25%, transparent);
+}
+.chart-legend-line {
+    display: inline-block;
+    width: 1.1rem; height: 2px;
+    border-radius: 1px;
+    background: currentColor; opacity: 0.85;
+}
+.chart-legend-dot {
+    display: inline-block;
+    width: 0.55rem; height: 0.55rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+
+/* ==========================================================================
+   12. SECTION PILLS & DASHBOARD DIVIDERS
+   ========================================================================== */
+.section-pill {
+    display:       inline-flex;
+    align-items:   center;
+    gap:           0.38rem;
+    padding:       0.28rem 0.8rem;
+    border-radius: 9999px;
+    font-size:     0.68rem;
+    font-weight:   700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color:          rgba(255,255,255,0.44);
+    background:     rgba(255,255,255,0.04);
+    border:         1px solid rgba(255,255,255,0.08);
+}
+.section-pill i { font-size: 0.7rem; opacity: 0.65; }
+
+
+/* ==========================================================================
+   13. ITERATION TABLE
+   ========================================================================== */
+.table-row { will-change: transform, opacity; }
+.table-row td { transition: background-color var(--t-fast) var(--ease-smooth); }
+
+.table-row--final td               { background: rgba(16,185,129,0.055); }
+.table-row--final:hover td         { background: rgba(16,185,129,0.10) !important; }
+
+
+/* ==========================================================================
+   14. THEORY PANEL — KaTeX overrides
+   ========================================================================== */
+.formula-card .katex         { font-size: 1.05em; }
+.formula-card .katex-display { margin: 0; overflow-x: auto; overflow-y: hidden; }
+.katex         { font-size: 1.1em; }
+.katex-display { margin: 0; }
+
+
+/* ==========================================================================
+   15. ALERT & ERROR STATES
+   ========================================================================== */
+.alert-card {
+    transition: border-color var(--t-base) var(--ease-smooth),
+                background   var(--t-base) var(--ease-smooth);
+}
+
+
+/* ==========================================================================
+   16. KEYFRAMES (shared)
+   ========================================================================== */
+@keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+}
+
+
+/* ==========================================================================
+   17. UTILITIES
+   ========================================================================== */
+.text-gradient {
+    background:              var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip:         text;
+}
+.font-mono-app { font-family: var(--font-mono); }
+
+.glow-primary { box-shadow: var(--glow-primary); }
+.glow-accent  { box-shadow: var(--glow-accent);  }
+.glow-emerald { box-shadow: var(--glow-emerald); }
+.glow-amber   { box-shadow: var(--glow-amber);   }
+
+
+/* ==========================================================================
+   18. ACCESSIBILITY & RESPONSIVE
+   ========================================================================== */
+:focus-visible {
+    outline:        2px solid rgba(14,165,233,0.80);
+    outline-offset: 3px;
+    border-radius:  var(--radius-sm);
+}
+
+@media (max-width: 640px) {
+    .glass-card   { border-radius: 0.875rem; }
+    .metric-value { font-size: 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration:        0.01ms !important;
+        animation-iteration-count: 1      !important;
+        transition-duration:       0.01ms !important;
+        scroll-behavior:           auto   !important;
+    }
+    .particle  { display: none; }
+    .status-dot { animation: none; opacity: 1; }
+}
+
