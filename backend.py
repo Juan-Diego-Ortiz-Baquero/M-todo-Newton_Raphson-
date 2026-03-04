@@ -247,10 +247,10 @@ def verificar():
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("🚀 Servidor Newton-Raphson iniciado")
+    print(" Servidor Newton-Raphson iniciado")
     print("=" * 60)
-    print("📍 URL: http://localhost:5000")
-    print("📁 API Endpoints:")
+    print(" URL: http://localhost:5000")
+    print(" API Endpoints:")
     print("   POST /api/calcular - Calcular Newton-Raphson")
     print("   GET  /api/funcion/info - Info de la función")
     print("   POST /api/verificar - Verificar valor")
